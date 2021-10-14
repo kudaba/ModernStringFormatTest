@@ -1,0 +1,3 @@
+[submodule "ModernStringFormat"]
+	path = ModernStringFormat
+	url = https://github.com/kudaba/ModernStringFormat
