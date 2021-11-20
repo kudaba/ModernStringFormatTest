@@ -14,6 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        token: ${{ secrets.MSF_REPO_ACCESS }}
         submodules: recursive
     - name: setup
       run: |
@@ -41,6 +42,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        token: ${{ secrets.MSF_REPO_ACCESS }}
         submodules: recursive
     - name: setup
       run: |
@@ -52,8 +54,6 @@ jobs:
       run: ./build_and_run_tests.sh debug mac
     - name: compile and test release
       run: ./build_and_run_tests.sh release mac
-    - name: compile and test retail
-      run: ./build_and_run_tests.sh retail mac
 
   Windows:
     runs-on: ${{ matrix.os }}
@@ -67,16 +67,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        token: ${{ secrets.MSF_REPO_ACCESS }}
         submodules: recursive
     - name: generate projects
       run: .\generate_projects.bat
     - name: compile debug
       shell: cmd
-      run: "%MSBUILD_PATH%" "%SLN_PATH%" /build debug
+      run: |
+        "%MSBUILD_PATH%" "%SLN_PATH%" /build debug
     - name: test debug
       run: .\.temp\bin\modernstringformatproject_win64_vs2019_debug.exe
     - name: compile release
       shell: cmd
-      run: "%MSBUILD_PATH%" "%SLN_PATH%" /build release
+      run: |
+        "%MSBUILD_PATH%" "%SLN_PATH%" /build release
     - name: test release
       run: .\.temp\bin\modernstringformatproject_win64_vs2019_release.exe 

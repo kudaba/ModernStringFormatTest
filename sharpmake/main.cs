@@ -28,16 +28,16 @@ namespace ModernStringFormat
 
     public static class Globals
 	{
-		public const string PathToRoot = @"\..";
+		public const string PathToRoot = "/..";
 
-		public const string PathToSrc = PathToRoot + @"\src";
-		public const string PathToSimpleTest = PathToRoot + @"\simpletest";
-		public const string PathToModernStringFormat = PathToRoot + @"\ModernStringFormat";
+		public const string PathToSrc = PathToRoot + "/src";
+		public const string PathToSimpleTest = PathToRoot + "/simpletest";
+		public const string PathToModernStringFormat = PathToRoot + "/ModernStringFormat";
 
-		public const string PathToTmp = PathToRoot + @"\.temp";
-		public const string PathToBuild = PathToTmp + @"\build";
-		public const string PathToBin = PathToTmp + @"\bin";
-		public const string PathToGen = PathToRoot + @"\projects";
+		public const string PathToTmp = PathToRoot + @"/.temp";
+		public const string PathToBuild = PathToTmp + @"/build";
+		public const string PathToBin = PathToTmp + @"/bin";
+		public const string PathToGen = PathToRoot + @"/projects";
 
 		public static readonly CrossTarget[] DefaultTargets = new CrossTarget[]
 		{
@@ -147,7 +147,7 @@ namespace ModernStringFormat
 		[Sharpmake.Main]
 		public static void SharpmakeMain(Sharpmake.Arguments args)
 		{
-			KitsRootPaths.SetKitsRoot10ToHighestInstalledVersion();
+			KitsRootPaths.SetKitsRoot10ToHighestInstalledVersion(DevEnv.vs2019);
 			args.Generate<ModernStringFormatSolution>();
 		}
 	}

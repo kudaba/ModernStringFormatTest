@@ -1,5 +1,5 @@
 #!/bin/bash
-./bin/Sharpmake/linux-x64/Sharpmake.Application "/sources(@'SharpMake/Main.cs') /verbose /generateDebugSolution $@"
+./bin/Sharpmake/linux-x64/Sharpmake.Application "/sources(@'sharpmake/main.cs') /verbose /generateDebugSolution $@"
 errorlevel=$?
 
 if [ ! $errorlevel -eq 0 ]; then
