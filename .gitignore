@@ -1,0 +1,7 @@
+.temp/
+.vscode/
+projects/
+
+!sharpmake
+sharpmake/*
+!sharpmake/*.cs

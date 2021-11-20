@@ -1,0 +1,82 @@
+name: Full Build
+
+on: [push]
+
+# Reduced compile matrix to single os and do multiple compiles in a single run to reduce minute usage
+
+jobs:
+  Linux:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: setup
+      run: |
+        chmod +x *.sh
+        chmod -R +x bin/*
+    - name: install dependencies
+      run: ./install_dependencies.sh
+    - name: generate projects
+      run: ./generate_projects.sh
+    - name: compile and test debug linux clang
+      run: ./build_and_run_tests.sh debug linux clang
+    - name: compile and test release linux clang
+      run: ./build_and_run_tests.sh release linux clang
+    - name: compile and test debug linux gcc
+      run: ./build_and_run_tests.sh debug linux gcc
+    - name: compile and test release linux gcc
+      run: ./build_and_run_tests.sh release linux gcc
+
+  Mac_OSX:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [macOS-latest]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: setup
+      run: |
+        chmod +x *.sh
+        chmod -R +x bin/*
+    - name: generate projects
+      run: ./generate_projects_osx.sh
+    - name: compile and test
+      run: ./build_and_run_tests.sh debug mac
+    - name: compile and test release
+      run: ./build_and_run_tests.sh release mac
+    - name: compile and test retail
+      run: ./build_and_run_tests.sh retail mac
+
+  Windows:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      MSBUILD_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\devenv.com
+      SLN_PATH: projects\modernstringformatsolution_win64_vs2019.sln
+    strategy:
+      matrix:
+        os: [windows-latest]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: generate projects
+      run: .\generate_projects.bat
+    - name: compile debug
+      shell: cmd
+      run: "%MSBUILD_PATH%" "%SLN_PATH%" /build debug
+    - name: test debug
+      run: .\.temp\bin\modernstringformatproject_win64_vs2019_debug.exe
+    - name: compile release
+      shell: cmd
+      run: "%MSBUILD_PATH%" "%SLN_PATH%" /build release
+    - name: test release
+      run: .\.temp\bin\modernstringformatproject_win64_vs2019_release.exe 
