@@ -5,15 +5,19 @@ This is the test harness for the project located here: https://github.com/kudaba
 
 ## How to run
 
+Remember to initialize submodules after clone.
+
 ### Windows
-Run generate_projects.bat
-Open projects\modernstringformatsolution_win64_vs2019.sln
+Run generate_projects.bat  
+Open projects\modernstringformatsolution_win64_vs2019.sln  
 Hit F5
 
 ### Linux
-Run generate_projects.sh
+Run chmod +x *.sh && chmod -R +x bin/*  
+Run generate_projects.sh  
 Run build_and_run_tests.sh
 
 ### Mac
-Run generate_projects_osx.sh
+Run chmod +x *.sh && chmod -R +x bin/*  
+Run generate_projects_osx.sh  
 Run build_and_run_tests.sh debug mac
