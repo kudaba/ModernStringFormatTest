@@ -257,7 +257,7 @@ DEFINE_TEST_G(PrintfAccuracy, MSF_String)
 	Printf("%-5s %10s %10s\n", "Test", "MSF", "std");
 	for (uint32_t i = 0; i < sizeof(types); ++i)
 	{
-		Printf("%-5c %10s %10s\n", types[i], timeFromHighRes(msfTimes[i], msfBuffer), timeFromHighRes(stdTime[i], stdBuffer));
+		Printf("%-5c %10s %10s(%%% 3.1f)\n", types[i], timeFromHighRes(msfTimes[i], msfBuffer), timeFromHighRes(stdTime[i], stdBuffer), double(msfTimes[i].count()) / double(stdTime[i].count()) * 100.0);
 	}
-	Printf("%-5s %10s %10s\n", "Total", timeFromHighRes(Tester.MSFTotalTime, msfBuffer), timeFromHighRes(Tester.STDTotalTime, stdBuffer));
+	Printf("%-5s %10s %10s(%%% 3.1f)\n", "Total", timeFromHighRes(Tester.MSFTotalTime, msfBuffer), timeFromHighRes(Tester.STDTotalTime, stdBuffer), double(Tester.MSFTotalTime.count()) / double(Tester.STDTotalTime.count()) * 100.0);
 }
