@@ -41,7 +41,7 @@ namespace ModernStringFormat
 
 		public static readonly CrossTarget[] DefaultTargets = new CrossTarget[]
 		{
-			new CrossTarget(Platform.win64,
+			new CrossTarget(Platform.win64 | Platform.win32,
 				DevEnv.vs2019,
 				Optimization.Debug | Optimization.Release),
 			new CrossTarget(Platform.linux,

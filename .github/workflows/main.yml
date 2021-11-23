@@ -61,6 +61,7 @@ jobs:
     env:
       MSBUILD_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\devenv.com
       SLN_PATH: projects\modernstringformatsolution_win64_vs2019.sln
+      SLN_PATH32: projects\modernstringformatsolution_win32_vs2019.sln
     strategy:
       matrix:
         os: [windows-latest]
@@ -71,15 +72,23 @@ jobs:
         submodules: recursive
     - name: generate projects
       run: .\generate_projects.bat
-    - name: compile debug
+    - name: compile and test debug 64
       shell: cmd
       run: |
         "%MSBUILD_PATH%" "%SLN_PATH%" /build debug
-    - name: test debug
-      run: .\.temp\bin\modernstringformatproject_win64_vs2019_debug.exe
-    - name: compile release
+        .\.temp\bin\modernstringformatproject_win64_vs2019_debug.exe
+    - name: compile and test release 64
       shell: cmd
       run: |
         "%MSBUILD_PATH%" "%SLN_PATH%" /build release
-    - name: test release
-      run: .\.temp\bin\modernstringformatproject_win64_vs2019_release.exe 
+        .\.temp\bin\modernstringformatproject_win64_vs2019_release.exe 
+    - name: compile and test debug 32
+      shell: cmd
+      run: |
+        "%MSBUILD_PATH%" "%SLN_PATH32%" /build debug
+        .\.temp\bin\modernstringformatproject_win32_vs2019_debug.exe
+    - name: compile and test release 32
+      shell: cmd
+      run: |
+        "%MSBUILD_PATH%" "%SLN_PATH32%" /build release
+        .\.temp\bin\modernstringformatproject_win32_vs2019_release.exe 

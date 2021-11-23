@@ -57,9 +57,14 @@ DEFINE_TEST_G(PrintfFormat, MSF_String)
 	TestFormatResult("fffffffffffffffb", "%x", (int64_t)-5);
 	TestFormatResult("FFFFFFFFFFFFFFFB", "%X", (int64_t)-5);
 
+#if defined(_MSC_VER)
 #if WIN64
 	TestFormatResult("00000000000000FF", "%p", (void*)255);
 	TestFormatResult("00000000000000FF", "%P", (void*)255);
+#else
+	TestFormatResult("000000FF", "%p", (void*)255);
+	TestFormatResult("000000FF", "%P", (void*)255);
+#endif
 #else
 	TestFormatResult("0xff", "%p", (void*)255);
 	TestFormatResult("0XFF", "%P", (void*)255);
@@ -99,9 +104,14 @@ DEFINE_TEST_G(CSharpFormat, MSF_String)
 	TestFormatResult("fffffffffffffffb", "%x", (int64_t)-5, "");
 	TestFormatResult("FFFFFFFFFFFFFFFB", "%X", (int64_t)-5, "");
 
+#if defined(_MSC_VER)
 #if WIN64
 	TestFormatResult("00000000000000FF", "{0}", (void*)255);
 	TestFormatResult("00000000000000FF", "{0:P}", (void*)255);
+#else
+	TestFormatResult("000000FF", "{0}", (void*)255);
+	TestFormatResult("000000FF", "{0:P}", (void*)255);
+#endif
 #else
 	TestFormatResult("0xff", "{0}", (void*)255);
 	TestFormatResult("0XFF", "{0:P}", (void*)255);
@@ -150,9 +160,14 @@ DEFINE_TEST_G(HybridFormat, MSF_String)
 	TestFormatResult("fffffffffffffffb", "{:x}", (int64_t)-5, "");
 	TestFormatResult("FFFFFFFFFFFFFFFB", "{:X}", (int64_t)-5, "");
 
+#if defined(_MSC_VER)
 #if WIN64
 	TestFormatResult("00000000000000FF", "{}", (void*)255);
 	TestFormatResult("00000000000000FF", "{:P}", (void*)255);
+#else
+	TestFormatResult("000000FF", "{}", (void*)255);
+	TestFormatResult("000000FF", "{:P}", (void*)255);
+#endif
 #else
 	TestFormatResult("0xff", "{}", (void*)255);
 	TestFormatResult("0XFF", "{:P}", (void*)255);

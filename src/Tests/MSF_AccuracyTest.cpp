@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <float.h>
+#include <random>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,10 +22,15 @@ public:
 	int PrintFErrors;
 	int TestCount;
 
+	std::minstd_rand0 Engine;
+	std::uniform_int_distribution<uint64_t> RandomInt;
+	std::uniform_real_distribution<long double> RandomFloat;
+
+
 	FormatTestRunner() : MSFTotalTime(0), STDTotalTime(0), PrintFErrors(0), TestCount(0) {}
 
 	template <typename ValueType>
-	void DoOneTest(char aType, ValueType aValue, char const* aFlags, int aWidth, int aPrecision)
+	void DoOneTest(char aType, ValueType aValue, char const* aModifier, char const* aFlags, int aWidth, int aPrecision)
 	{
 		++TestCount;
 
@@ -45,6 +51,13 @@ public:
 			if (aWidth >= 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, "{}", aWidth);
 			if (aPrecision >= 0) *formatWrite++ = '.';
 			if (aPrecision > 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, "{}", aPrecision - 1);
+
+			{
+				size_t const modssLen = MSF_Strlen(aModifier);
+				MSF_CopyChars(formatWrite, formatWriteEnd, aModifier, modssLen);
+				formatWrite += modssLen;
+			}
+
 			*formatWrite++ = aType;
 			*formatWrite++ = 0;
 		}
@@ -77,15 +90,17 @@ public:
 		PrintFErrors += !equivalent;
 	}
 
-	void DoPrintfTest(char aType, char const* aFlags, int aWidth = -1, int aPrecision = -1)
+	void DoPrintfTest(char aType, char const* aModifier, char const* aFlags, int aWidth = -1, int aPrecision = -1)
 	{
 		switch (aType)
 		{
 		case 'c':
-			DoOneTest<char>(aType, 'a' + (rand() % ('z' - 'a')), aFlags, aWidth, aPrecision);
+			if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
+				DoOneTest<char>(aType, 'a' + (RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
 			break;
 		case 's':
-			DoOneTest(aType, "test", aFlags, aWidth, aPrecision);
+			if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
+				DoOneTest(aType, "test", aModifier, aFlags, aWidth, aPrecision);
 			break;
 		case 'd':
 		case 'i':
@@ -93,9 +108,46 @@ public:
 		case 'u':
 		case 'x':
 		case 'X':
+			switch (aModifier[0])
+			{
+			case 0:
+				DoOneTest(aType, (int)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 'h':
+				if (aModifier[1] == 'h')
+					DoOneTest(aType, (char)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				else
+					DoOneTest(aType, (short)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 'l':
+				if (aModifier[1] == 'l')
+					DoOneTest(aType, (long long)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				else
+					DoOneTest(aType, (long)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 'j':
+				DoOneTest(aType, (intmax_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 'z':
+				DoOneTest(aType, (size_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 't':
+				DoOneTest(aType, (ptrdiff_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 'I':
+				if (aModifier[1] == '6')
+					DoOneTest(aType, (uint64_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				else if (aModifier[1] == '3')
+					DoOneTest(aType, (uint32_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				else
+					DoOneTest(aType, (size_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			}
+			break;
 		case 'p':
 		case 'P':
-			DoOneTest(aType, rand() * rand(), aFlags, aWidth, aPrecision);
+			if (aModifier[0] == 0)
+				DoOneTest(aType, (void*)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 			break;
 		break;
 		case 'e':
@@ -104,14 +156,18 @@ public:
 		case 'F':
 		case 'g':
 		case 'G':
-			static double v;
-			// Test really big and really small numbers
-			if (rand() % 1)
-				v = (double)rand() * (double)rand();
-			else
-				v = (double)rand() / ((double)rand() + FLT_EPSILON);
-
-			DoOneTest(aType, v, aFlags, aWidth, aPrecision);
+			switch (aModifier[0])
+			{
+			case 0:
+				DoOneTest(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+			case 'l':
+				if (aModifier[1] != 'l')
+					DoOneTest(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			case 'L':
+				DoOneTest(aType, (long double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+				break;
+			}
 			break;
 		default:
 			TestFixture::GetCurrentTest()->LogMessage(TEST_ERROR_PREFIX_ "Invalid printf test type %c", "switch (aType)", aType);
@@ -126,7 +182,16 @@ DEFINE_TEST_G(PrintfAccuracy, MSF_String)
 {
 	srand(73737); // whatev, just keep it consistent between runs
 
-	char types[] = { 'c', 's', 'd', 'i', 'o', 'u', 'x', 'X', 'p', 'e', 'E', 'f', 'F', 'g', 'G'};
+	char const types[] = { 'c', 's', 'd', 'i', 'o', 'u', 'x', 'X', 'p', 'e', 'E', 'f', 'F', 'g', 'G'};
+	char const* modifiers[] =
+	{
+		// Global standard
+		"", "hh", "h", "l", "ll", "j", "z", "t", "L"
+#if defined(_MSC_VER)
+		// MSVC
+		, "I", "I32", "I64", "w"
+#endif
+	};
 	char const* flags[] =
 	{
 		"", "-", "+", "0", " ", "#",
@@ -147,27 +212,33 @@ DEFINE_TEST_G(PrintfAccuracy, MSF_String)
 
 	FormatTestRunner Tester;
 
-	for (uint32_t i = 0; i < sizeof(types); ++i)
+	int typeIndex = 0;
+	for (char const type : types)
 	{
 		auto PrintFstart = Tester.MSFTotalTime;
 		auto printfstart = Tester.STDTotalTime;
-		for (uint32_t j = 0; j < sizeof(flags) / sizeof(flags[0]); ++j)
+
+		for (char const* mod : modifiers)
 		{
-			Tester.DoPrintfTest(types[i], flags[j]);
-			for (int w = -1; w < 15; ++w)
+			for (char const* flag : flags)
 			{
-				Tester.DoPrintfTest(types[i], flags[j], w);
-				for (uint32_t p = 0; p < 11; ++p)
+				Tester.DoPrintfTest(type, mod, flag);
+				for (int width = -1; width < 15; ++width)
 				{
-					for (uint32_t c = 0; c < iterations; ++c)
+					Tester.DoPrintfTest(type, mod, flag, width);
+					for (uint32_t precision = 0; precision < 11; ++precision)
 					{
-						Tester.DoPrintfTest(types[i], flags[j], w, p);
+						for (uint32_t iteration = 0; iteration < iterations; ++iteration)
+						{
+							Tester.DoPrintfTest(type, mod, flag, width, precision);
+						}
 					}
 				}
 			}
 		}
-		msfTimes[i] = Tester.MSFTotalTime - PrintFstart;
-		stdTime[i] = Tester.STDTotalTime - printfstart;
+		msfTimes[typeIndex] = Tester.MSFTotalTime - PrintFstart;
+		stdTime[typeIndex] = Tester.STDTotalTime - printfstart;
+		++typeIndex;
 	}
 	if (Tester.PrintFErrors)
 	{
