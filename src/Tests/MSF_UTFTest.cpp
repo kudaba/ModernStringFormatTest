@@ -7,7 +7,9 @@
 #endif
 
 #include <string.h>
-#include <cuchar>
+
+#if !defined(__APPLE__)
+#include <uchar.h>
 
 DEFINE_TEST(UTF)
 {
@@ -63,6 +65,8 @@ DEFINE_TEST(UTF)
 		}
 	}
 }
+
+#endif
 
 template <typename A, typename B>
 static void locTestUTFCopy(A const* testA, B const* testB)
