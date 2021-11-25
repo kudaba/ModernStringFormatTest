@@ -1,9 +1,10 @@
-#include "MSF_UnitTests.h"
+﻿#include "MSF_UnitTests.h"
 #include "MSF_Format.h"
 #include "MSF_Utilities.h"
 
 #include <chrono>
 #include <float.h>
+#include <locale>
 #include <random>
 #include <string.h>
 #include <stdio.h>
@@ -66,7 +67,8 @@ public:
 		char stlBuffer[256]; // stl version of sprintf
 		char valueBuffer[256]; // raw value being printed
 
-		char valuePrintf[3] = { '%', aType, '\0' };
+		char valuePrintf[8];
+		sprintf(valuePrintf, "%%%s%c", aModifier, aType);
 
 		sprintf(valueBuffer, valuePrintf, aValue);
 
@@ -96,11 +98,15 @@ public:
 		{
 		case 'c':
 			if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
-				DoOneTest<char>(aType, 'a' + (RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest(aType, 'a' + (char)(RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
+			else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
+				DoOneTest(aType, (wchar_t)(RandomInt(Engine) % 0xd800), aModifier, aFlags, aWidth, aPrecision);
 			break;
 		case 's':
 			if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
-				DoOneTest(aType, "test", aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest(aType, u8"无国界医生", aModifier, aFlags, aWidth, aPrecision);
+			else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
+				DoOneTest(aType, L"无国界医生", aModifier, aFlags, aWidth, aPrecision);
 			break;
 		case 'd':
 		case 'i':
@@ -181,7 +187,11 @@ public:
 DEFINE_TEST_G(PrintfAccuracy, MSF_String)
 {
 	srand(73737); // whatev, just keep it consistent between runs
-
+#if defined(_MSC_VER)
+	setlocale(LC_ALL, ".UTF-8");
+#else
+	setlocale(LC_ALL, "C.UTF-8");
+#endif
 	char const types[] = { 'c', 's', 'd', 'i', 'o', 'u', 'x', 'X', 'p', 'e', 'E', 'f', 'F', 'g', 'G'};
 	char const* modifiers[] =
 	{
