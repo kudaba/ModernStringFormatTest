@@ -2,7 +2,6 @@
 #include "MSF_Format.h"
 #include "MSF_FormatPrint.h"
 #include "MSF_Utilities.h"
-#include <string.h>
 #include <stdlib.h>
 #include <wchar.h>
 
@@ -369,14 +368,6 @@ DEFINE_TEST_G(FormatLimits, MSF_String)
 	locTestLimits<uint8_t>("(%u,%u)", 0, UINT8_MAX, "(0,255)");
 }
 
-template <typename... Args>
-static void TestFormatResult(char16_t const* anExpectedResult, char16_t const* aFormat, Args... someArgs)
-{
-	char16_t tmp[256];
-	TEST_GREATER(MSF_Format(tmp, aFormat, someArgs...), 0);
-	TEST_MESSAGE(memcmp(tmp, anExpectedResult, (MSF_Strlen(anExpectedResult)+1) * sizeof(char16_t)) == 0, "%S != %S", tmp, anExpectedResult);
-}
-
 DEFINE_TEST_G(UTF16, MSF_String)
 {
 	TestFormatResult(u8"œ", "%c", u'œ');
@@ -386,4 +377,6 @@ DEFINE_TEST_G(UTF16, MSF_String)
 	TestFormatResult(u8"œ œ", "%s", u"œ œ");
 	TestFormatResult(u8"œ œ", "%s", U"œ œ");
 	TestFormatResult(u8"œ œ", "%s", L"œ œ");
+
+	TEST_STR_EQ(MSF_StrFmt("%s", "foo"), "foo");
 }

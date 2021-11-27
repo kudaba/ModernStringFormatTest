@@ -30,51 +30,67 @@ public:
 
 	FormatTestRunner() : MSFTotalTime(0), STDTotalTime(0), PrintFErrors(0), TestCount(0) {}
 
-	template <typename ValueType>
-	void DoOneTest(char aType, ValueType aValue, char const* aModifier, char const* aFlags, int aWidth, int aPrecision)
+	template <typename... Args>
+	int Sprintf(char* aDest, char const* aFormat, Args const&... someArgs)
+	{
+		return sprintf(aDest, aFormat, someArgs...);
+	}
+	template <int Size, typename... Args>
+	int Sprintf(wchar_t (&aDest)[Size], wchar_t const* aFormat, Args const&... someArgs)
+	{
+		return swprintf(aDest, Size, aFormat, someArgs...);
+	}
+
+	bool Streq(char const* aLeft, char const* aRight)
+	{
+		return strcmp(aLeft, aRight) == 0;
+	}
+
+	bool Streq(wchar_t const* aLeft, wchar_t const* aRight)
+	{
+		return wcscmp(aLeft, aRight) == 0;
+	}
+
+	template <typename Char, typename ValueType>
+	void DoOneTest(Char aType, ValueType aValue, char const* aModifier, char const* aFlags, int aWidth, int aPrecision)
 	{
 		++TestCount;
 
-		char format[256];
+		Char format[256];
+		Char convert[] = { '{', '}', 0 };
 
 		// build format string
 		{
-			char const* formatWriteEnd = format + sizeof(format);
-			char* formatWrite = format;
+			Char const* formatWriteEnd = format + sizeof(format) / sizeof(format[0]);
+			Char* formatWrite = format;
 			*formatWrite++ = '%';
 
-			{
-				size_t const flagsLen = MSF_Strlen(aFlags);
-				MSF_CopyChars(formatWrite, formatWriteEnd, aFlags, flagsLen);
-				formatWrite += flagsLen;
-			}
+			formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aFlags);
 
-			if (aWidth >= 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, "{}", aWidth);
+			if (aWidth >= 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aWidth);
 			if (aPrecision >= 0) *formatWrite++ = '.';
-			if (aPrecision > 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, "{}", aPrecision - 1);
+			if (aPrecision > 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aPrecision - 1);
 
-			{
-				size_t const modssLen = MSF_Strlen(aModifier);
-				MSF_CopyChars(formatWrite, formatWriteEnd, aModifier, modssLen);
-				formatWrite += modssLen;
-			}
-
+			formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aModifier);
 			*formatWrite++ = aType;
 			*formatWrite++ = 0;
 		}
 
-		char msfBuffer[256]; // our version of sprintf
-		char stlBuffer[256]; // stl version of sprintf
-		char valueBuffer[256]; // raw value being printed
+		Char msfBuffer[256]; // our version of sprintf
+		Char stlBuffer[256]; // stl version of sprintf
+		Char valueBuffer[256]; // raw value being printed
 
-		char valuePrintf[8];
-		sprintf(valuePrintf, "%%%s%c", aModifier, aType);
+		Char valuePrintfPrintf[8];
+		MSF_Format(valuePrintfPrintf, convert, "%%%s%c");
 
-		sprintf(valueBuffer, valuePrintf, aValue);
+		Char valuePrintf[8];
+		MSF_Format(valuePrintf, valuePrintfPrintf, aModifier, aType);
+
+		Sprintf(valueBuffer, valuePrintf, aValue);
 
 		{
 			auto perfTime = HighResClock::now();
-			sprintf(stlBuffer, format, aValue);
+			Sprintf(stlBuffer, format, aValue);
 			STDTotalTime += HighResClock::now() - perfTime;
 		}
 
@@ -86,27 +102,54 @@ public:
 			MSFTotalTime += HighResClock::now() - perfTime;
 		}
 
-		bool equivalent = strcmp(msfBuffer, stlBuffer) == 0;
-		TEST_MESSAGE(equivalent, "Format Error for: \"%s\" Value[%s]\nMSF: \"%s\"\nstd: \"%s\"",
-			format, valueBuffer, msfBuffer, stlBuffer);
+		bool equivalent = Streq(msfBuffer, stlBuffer);
+		TEST_MESSAGE(equivalent, "%s", MSF_StrFmtUTF8<1024>("Format Error for: \"%s\" Value[%s]\nMSF: \"%s\"\nstd: \"%s\"",
+			format, valueBuffer, msfBuffer, stlBuffer));
 		PrintFErrors += !equivalent;
 	}
 
-	void DoPrintfTest(char aType, char const* aModifier, char const* aFlags, int aWidth = -1, int aPrecision = -1)
+	template <typename Char>
+	void DoPrintfTestT(char aType, char const* aModifier, char const* aFlags, int aWidth = -1, int aPrecision = -1)
 	{
 		switch (aType)
 		{
 		case 'c':
-			if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
-				DoOneTest(aType, 'a' + (char)(RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
-			else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
-				DoOneTest(aType, (wchar_t)(RandomInt(Engine) % 0xd800), aModifier, aFlags, aWidth, aPrecision);
+#if defined(_MSC_VER)
+#pragma warning(disable:4127) // expression is constant
+			if (sizeof(Char) == sizeof(wchar_t))
+			{
+				if (strcmp(aModifier, "h") == 0)
+					DoOneTest<Char>(aType, 'a' + (char)(RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
+				else if (aModifier[0] == 0 || aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
+					DoOneTest<Char>(aType, (wchar_t)(RandomInt(Engine) % 0xd800), aModifier, aFlags, aWidth, aPrecision);
+			}
+			else
+#endif
+			{
+				if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
+					DoOneTest<Char>(aType, 'a' + (char)(RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
+				else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
+					DoOneTest<Char>(aType, (wchar_t)(RandomInt(Engine) % 0xd800), aModifier, aFlags, aWidth, aPrecision);
+			}
 			break;
 		case 's':
-			if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
-				DoOneTest(aType, u8"无国界医生", aModifier, aFlags, aWidth, aPrecision);
-			else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
-				DoOneTest(aType, L"无国界医生", aModifier, aFlags, aWidth, aPrecision);
+#if defined(_MSC_VER)
+			if (sizeof(Char) == sizeof(wchar_t))
+			{
+				//if (strcmp(aModifier, "h") == 0)
+				//	DoOneTest<Char>(aType, u8"无国界医生", aModifier, aFlags, aWidth, aPrecision);
+				//else
+					if (aModifier[0] == 0 || aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
+					DoOneTest<Char>(aType, L"无国界医生", aModifier, aFlags, aWidth, aPrecision);
+			}
+			else
+#endif
+			{
+				if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
+					DoOneTest<Char>(aType, u8"无国界医生", aModifier, aFlags, aWidth, aPrecision);
+				else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
+					DoOneTest<Char>(aType, L"无国界医生", aModifier, aFlags, aWidth, aPrecision);
+			}
 			break;
 		case 'd':
 		case 'i':
@@ -117,45 +160,45 @@ public:
 			switch (aModifier[0])
 			{
 			case 0:
-				DoOneTest(aType, (int)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (int)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'h':
 				if (aModifier[1] == 'h')
-					DoOneTest(aType, (char)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (char)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				else
-					DoOneTest(aType, (short)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (short)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'l':
 				if (aModifier[1] == 'l')
-					DoOneTest(aType, (long long)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (long long)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				else
-					DoOneTest(aType, (long)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (long)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'j':
-				DoOneTest(aType, (intmax_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (intmax_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'z':
-				DoOneTest(aType, (size_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (size_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 't':
-				DoOneTest(aType, (ptrdiff_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (ptrdiff_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'I':
 				if (aModifier[1] == '6')
-					DoOneTest(aType, (uint64_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (uint64_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				else if (aModifier[1] == '3')
-					DoOneTest(aType, (uint32_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (uint32_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				else
-					DoOneTest(aType, (size_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (size_t)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			}
 			break;
 		case 'p':
 		case 'P':
 			if (aModifier[0] == 0)
-				DoOneTest(aType, (void*)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (void*)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 			break;
-		break;
+			break;
 		case 'e':
 		case 'E':
 		case 'f':
@@ -165,13 +208,13 @@ public:
 			switch (aModifier[0])
 			{
 			case 0:
-				DoOneTest(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
 			case 'l':
 				if (aModifier[1] != 'l')
-					DoOneTest(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'L':
-				DoOneTest(aType, (long double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+				DoOneTest<Char>(aType, (long double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			}
 			break;
@@ -179,6 +222,12 @@ public:
 			TestFixture::GetCurrentTest()->LogMessage(TEST_ERROR_PREFIX_ "Invalid printf test type %c", "switch (aType)", aType);
 			return;
 		}
+	}
+
+	void DoPrintfTest(char aType, char const* aModifier, char const* aFlags, int aWidth = -1, int aPrecision = -1)
+	{
+		DoPrintfTestT<char>(aType, aModifier, aFlags, aWidth, aPrecision);
+		DoPrintfTestT<wchar_t>(aType, aModifier, aFlags, aWidth, aPrecision);
 	}
 };
 

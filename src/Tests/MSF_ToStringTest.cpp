@@ -61,6 +61,6 @@ DEFINE_TEST_G(DoubleToString, ToString)
 	TestDoubleToStrings(5, "5.000000", "5.000000e+00", "5");
 
 	char buffer[256];
-	TEST_EQ(MSF_DoubleToString(5, buffer), MSF_DoubleToString(5, nullptr, 0));
+	TEST_EQ(MSF_DoubleToString(5, buffer), MSF_DoubleToStringLength(5));
 	TEST_EQ(MSF_DoubleToString(5, buffer, 2), -1);
 }
