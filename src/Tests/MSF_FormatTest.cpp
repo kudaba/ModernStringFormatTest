@@ -268,7 +268,7 @@ static void locLogAssertExternal(const char*, int, char const*, MSF_StringFormat
 {
 }
 
-static bool locLogAssert()
+static bool locDoAssert()
 {
 	++theAssertCount;
 	return false;
@@ -288,13 +288,13 @@ DEFINE_TEST_G(FormatFailureAsserts, MSF_String)
 {
 	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::Assert);
 	MSF_LogAssertExternal = &locLogAssertExternal;
-	MSF_LogAssertBreak = &locLogAssert;
+	MSF_DoAssert = &locDoAssert;
 
 	TestFormatResultAsserts("{0", 1);
 	TestFormatResultAsserts("{1}", 1);
 	TestFormatResultAsserts("%f %f", 1.f);
 
-	MSF_LogAssertBreak = nullptr;
+	MSF_DoAssert = nullptr;
 	MSF_LogAssertExternal = nullptr;
 	MSF_CustomPrint::ClearLocalErrorMode();
 }

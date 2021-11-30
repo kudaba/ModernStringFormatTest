@@ -94,7 +94,7 @@ public:
 			STDTotalTime += HighResClock::now() - perfTime;
 		}
 
-		// Must come second, there's a compiler error that's causing aValue to change or get lost
+		// Must come second, there's a compilersta error that's causing aValue to change or get lost
 		// when optimizations are enabled
 		{
 			auto perfTime = HighResClock::now();
@@ -103,9 +103,17 @@ public:
 		}
 
 		bool equivalent = Streq(msfBuffer, stlBuffer);
-		TEST_MESSAGE(equivalent, "%s", MSF_StrFmtUTF8<1024>("Format Error for: \"%s\" Value[%s]\nMSF: \"%s\"\nstd: \"%s\"",
-			format, valueBuffer, msfBuffer, stlBuffer));
-		PrintFErrors += !equivalent;
+		if (!equivalent)
+		{
+			auto error = MSF_StrFmtUTF8<1024>("Format Error for: \"%s\" Value[%s]\nMSF: \"%s\"\nstd: \"%s\"", format, valueBuffer, msfBuffer, stlBuffer);
+			TEST_MESSAGE(equivalent, "%s", (char const*)error);
+			PrintFErrors++;
+		}
+		else
+		{
+			// Don't do formatting for all conditions otherwise tests will take forever.
+			TEST_MESSAGE(true, "");
+		}
 	}
 
 	template <typename Char>
@@ -160,6 +168,7 @@ public:
 			switch (aModifier[0])
 			{
 			case 0:
+				DoOneTest<Char>(aType, 0, aModifier, aFlags, aWidth, aPrecision);
 				DoOneTest<Char>(aType, (int)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
 				break;
 			case 'h':
@@ -196,7 +205,10 @@ public:
 		case 'p':
 		case 'P':
 			if (aModifier[0] == 0)
+			{
+				DoOneTest<Char>(aType, (void*)0, aModifier, aFlags, aWidth, aPrecision);
 				DoOneTest<Char>(aType, (void*)RandomInt(Engine), aModifier, aFlags, aWidth, aPrecision);
+			}
 			break;
 			break;
 		case 'e':
@@ -208,7 +220,10 @@ public:
 			switch (aModifier[0])
 			{
 			case 0:
+			{
+				DoOneTest<Char>(aType, 0.f, aModifier, aFlags, aWidth, aPrecision);
 				DoOneTest<Char>(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
+			}
 			case 'l':
 				if (aModifier[1] != 'l')
 					DoOneTest<Char>(aType, (double)RandomFloat(Engine), aModifier, aFlags, aWidth, aPrecision);
