@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 
-DEFINE_TEST_G(BasicPrinting, MSF_String)
+DEFINE_TEST_G(BasicPrinting, MSF_Format)
 {
 	TestFormatResult("%d", "%%d", 5);
 	TestFormatResult("%5", "%%%d", 5);
@@ -27,7 +27,7 @@ DEFINE_TEST_G(BasicPrinting, MSF_String)
 	TestFormatResult("1 1 2 2", "{0} {0} {1} {1}", 1, 2, 3, 4);
 }
 
-DEFINE_TEST_G(PrintfFormat, MSF_String)
+DEFINE_TEST_G(PrintfFormat, MSF_Format)
 {
 	// Mostly test basic printing, accuracy test flexes the limits of each type
 	TestFormatResult("c", "%c", 'c');
@@ -81,7 +81,7 @@ DEFINE_TEST_G(PrintfFormat, MSF_String)
 	TestFormatResult("1.5", "%g", 1.5);
 }
 
-DEFINE_TEST_G(CSharpFormat, MSF_String)
+DEFINE_TEST_G(CSharpFormat, MSF_Format)
 {
 	TestFormatResult("c", "{0}", 'c');
 	TestFormatResult("c", "{0:C}", 'c');
@@ -137,7 +137,7 @@ DEFINE_TEST_G(CSharpFormat, MSF_String)
 	TestFormatResult("0000A     ", "{0,-10:X5}", 10);
 }
 
-DEFINE_TEST_G(HybridFormat, MSF_String)
+DEFINE_TEST_G(HybridFormat, MSF_Format)
 {
 	TestFormatResult("c", "{}", 'c');
 	TestFormatResult("c", "{:C}", 'c');
@@ -201,7 +201,7 @@ static void TestFormatResultFail(char const* aFormat, Args... someArgs)
 	TEST_EQ(strncmp(tmp, "ER_", 3), 0);
 }
 
-DEFINE_TEST_G(ErrorConditions, MSF_String)
+DEFINE_TEST_G(ErrorConditions, MSF_Format)
 {
 	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::WriteString);
 
@@ -245,10 +245,10 @@ static void TestFormatResultError(char const* anErrorMessage, char const* aForma
 {
 	char tmp[Size];
 	TEST_LESS(MSF_Format(tmp, aFormat, someArgs...), 0);
-	TEST_EQ(strncmp(tmp, anErrorMessage, MSF_IntMin(strlen(anErrorMessage), sizeof(tmp))), 0);
+	TEST_EQ(strncmp(tmp, anErrorMessage, MSF_IntMin(strlen(anErrorMessage), sizeof(tmp) - 1)), 0);
 }
 
-DEFINE_TEST_G(FormatFailureStrings, MSF_String)
+DEFINE_TEST_G(FormatFailureStrings, MSF_Format)
 {
 	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::WriteString);
 
@@ -284,7 +284,7 @@ static void TestFormatResultAsserts(char const* aFormat, Args... someArgs)
 	theAssertCount = 0;
 }
 
-DEFINE_TEST_G(FormatFailureAsserts, MSF_String)
+DEFINE_TEST_G(FormatFailureAsserts, MSF_Format)
 {
 	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::Assert);
 	MSF_LogAssertExternal = &locLogAssertExternal;
@@ -337,7 +337,7 @@ static void locTestLimits(char const* aFormat, Type aMin, Type aMax, char const*
 	TEST_STR_EQ(tmp, aResult);
 }
 
-DEFINE_TEST_G(FormatLimits, MSF_String)
+DEFINE_TEST_G(FormatLimits, MSF_Format)
 {
 	locTestLimits<int64_t>("(%d,%d)", INT64_MIN, INT64_MAX, "(-9223372036854775808,9223372036854775807)");
 	locTestLimits<int32_t>("(%d,%d)", INT32_MIN, INT32_MAX, "(-2147483648,2147483647)");
@@ -368,7 +368,7 @@ DEFINE_TEST_G(FormatLimits, MSF_String)
 	locTestLimits<uint8_t>("(%u,%u)", 0, UINT8_MAX, "(0,255)");
 }
 
-DEFINE_TEST_G(UTF16, MSF_String)
+DEFINE_TEST_G(UTF16, MSF_Format)
 {
 	TestFormatResult(u8"œ", "%c", u'œ');
 	TestFormatResult(u8"œ", "%c", U'œ');
@@ -379,4 +379,45 @@ DEFINE_TEST_G(UTF16, MSF_String)
 	TestFormatResult(u8"œ œ", "%s", L"œ œ");
 
 	TEST_STR_EQ(MSF_StrFmt("%s", "foo"), "foo");
+}
+
+DEFINE_TEST_G(FormatCopy, MSF_Format)
+{
+	TEST_EQ(nullptr, MSF_CopyStringFormat(MSF_MakeStringFormat(""), [](size_t) -> void* { return nullptr; }));
+
+	char testString[256];
+	char targetString[256];
+	{
+		MSF_CopyChars(testString, testString + 256, "{} {} {} {}");
+
+		auto copy = MSF_CopyStringFormat(
+			MSF_MakeStringFormat(testString, 'c', 5, 1.5f, "Oh and a big string"),
+			[](size_t aSize) { return malloc(aSize); });
+
+		testString[0] = 0;
+
+		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "c 5 1.5 Oh and a big string");
+		free((void*)copy);
+	}
+
+	{
+		MSF_CopyChars(testString, testString + 256, "{} {} {} {}");
+
+		auto copy = MSF_CopyStringFormat(
+			MSF_MakeStringFormat(testString, 'c', 5, 1.5f, "Oh and a big string"),
+			[](size_t aSize) { return malloc(aSize); }, false);
+
+		testString[0] = 0;
+
+		TEST_EQ(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "");
+
+		MSF_CopyChars(testString, testString + 256, "{} {}");
+
+		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "c 5");
+
+		free((void*)copy);
+	}
 }

@@ -118,3 +118,42 @@ DEFINE_TEST_G(Conversion, CustomType)
 	TEST_GREATER(MSF_FormatString(MSF_MakeStringFormat("{}", std::string("This is a long string to force allocation")), tmp, sizeof(tmp)), 0);
 	TEST_STR_EQ(tmp, "This is a long string to force allocation");
 }
+
+DEFINE_TEST_G(Copy, CustomType)
+{
+	char targetString[256];
+
+	{
+		std::chrono::seconds sec(5);
+		auto copy = MSF_CopyStringFormat(
+			MSF_MakeStringFormat("{}", sec),
+			[](size_t aSize) { return malloc(aSize); });
+
+		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "5s");
+
+		sec = std::chrono::seconds(0);
+
+		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "0s");
+		free((void*)copy);
+	}
+
+	MSF_CustomPrint::RegisterTypeCopyLength('t', [](const MSF_StringFormatType&) { return sizeof(std::chrono::seconds); });
+
+	{
+		std::chrono::seconds sec(5);
+		auto copy = MSF_CopyStringFormat(
+			MSF_MakeStringFormat("{}", sec),
+			[](size_t aSize) { return malloc(aSize); });
+
+		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "5s");
+
+		sec = std::chrono::seconds(0);
+
+		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
+		TEST_STR_EQ(targetString, "5s");
+		free((void*)copy);
+	}
+}
