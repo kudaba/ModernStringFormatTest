@@ -421,3 +421,38 @@ DEFINE_TEST_G(FormatCopy, MSF_Format)
 		free((void*)copy);
 	}
 }
+
+DEFINE_TEST_G(Wildcards, MSF_Format)
+{
+	TestFormatResult("    c", "%*c", 5, 'c');
+	TestFormatResult("1.1", "%.*f", 1, 1.14f);
+	TestFormatResult("  1.1", "%*.*f", 5, 1, 1.14f);
+
+	char testString[256];
+	TEST_LESS(MSF_Format(testString, "%**c", 1, 2, 'c'), 0);
+	TEST_LESS(MSF_Format(testString, "%5*c", 1, 2, 'c'), 0);
+	TEST_LESS(MSF_Format(testString, "%*5c", 1, 2, 'c'), 0);
+}
+
+DEFINE_TEST_G(PedanticErrors, MSF_Format)
+{
+	bool shouldError = MSF_ERROR_PEDANTIC;
+	char testString[256];
+
+	TEST_EQ(MSF_Format(testString, "%--c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%++c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%  c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%##c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%..c", 'c') < 0, shouldError);
+
+	TEST_EQ(MSF_Format(testString, "%5-c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5+c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5 c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5#c", 'c') < 0, shouldError);
+
+	TEST_EQ(MSF_Format(testString, "%5.5-c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5.5+c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5.5 c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5.5#c", 'c') < 0, shouldError);
+	TEST_EQ(MSF_Format(testString, "%5.5.c", 'c') < 0, shouldError);
+}

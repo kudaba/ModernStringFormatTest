@@ -7,6 +7,8 @@ int MSF_AccuracyTestIterations;
 
 int main(int argc, char* argv[])
 {
+	char const* groupFilter = nullptr;
+	char const* testFilter = nullptr;
 	for (int i = 1; i < argc; ++i)
 	{
 		char const* line = argv[i];
@@ -29,7 +31,15 @@ int main(int argc, char* argv[])
 		{
 			MSF_AccuracyTestIterations = 10;
 		}
+		else if (strncmp(line, "group:", strlen("group:")) == 0)
+		{
+			groupFilter = line + strlen("group:");
+		}
+		else if (strncmp(line, "test:", strlen("test:")) == 0)
+		{
+			testFilter = line + strlen("test:");
+		}
 	}
 
-	TestFixture::ExecuteAllTests(TestFixture::Normal);
+	TestFixture::ExecuteAllTests(groupFilter, testFilter, TestFixture::Normal);
 }

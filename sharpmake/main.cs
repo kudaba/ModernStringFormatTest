@@ -79,6 +79,9 @@ namespace ModernStringFormat
 			conf.TargetFileName = @"[conf.ProjectFileName]_[target.Optimization]";
 
 			conf.Defines.Add("MSF_HEAVY_ASSERTS_ENABLED");
+
+			if (target.Platform != Platform.win32) // have at least one set of tests that do not use it
+				conf.Defines.Add("MSF_ERROR_PEDANTIC");
         }
 
         [Configure(DevEnv.VisualStudio)]

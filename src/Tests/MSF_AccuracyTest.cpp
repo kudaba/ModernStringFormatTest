@@ -296,11 +296,9 @@ DEFINE_TEST_G(PrintfAccuracy, MSF_String)
 		{
 			for (char const* flag : flags)
 			{
-				Tester.DoPrintfTest(type, mod, flag);
 				for (int width = -1; width < 15; ++width)
 				{
-					Tester.DoPrintfTest(type, mod, flag, width);
-					for (uint32_t precision = 0; precision < 11; ++precision)
+					for (int precision = -1; precision < 11; ++precision)
 					{
 						for (uint32_t iteration = 0; iteration < iterations; ++iteration)
 						{
