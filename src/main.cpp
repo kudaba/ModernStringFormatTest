@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 		// Any string errors will generate an assert by default (unless overidden by a specific test)
 		else if (strcmp(line, "assert") == 0)
 		{
-			MSF_CustomPrint::SetGlobalErrorMode(MSF_CustomPrint::Assert);
+			MSF_CustomPrint::SetGlobalErrorMode(MSF_ErrorMode::Assert);
 		}
 		// Perform the same number of accuracy tests in debug that release uses
 		else if (strcmp(line, "all") == 0)

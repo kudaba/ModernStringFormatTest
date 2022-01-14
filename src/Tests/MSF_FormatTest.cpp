@@ -135,6 +135,8 @@ DEFINE_TEST_G(CSharpFormat, MSF_Format)
 	TestFormatResult("0000A", "{0:X5}", 10);
 	TestFormatResult("     0000A", "{0,10:X5}", 10);
 	TestFormatResult("0000A     ", "{0,-10:X5}", 10);
+
+	TestFormatResult("10", "{10}", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 }
 
 DEFINE_TEST_G(HybridFormat, MSF_Format)
@@ -203,7 +205,7 @@ static void TestFormatResultFail(char const* aFormat, Args... someArgs)
 
 DEFINE_TEST_G(ErrorConditions, MSF_Format)
 {
-	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::WriteString);
+	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::WriteString);
 
 	TestFormatResultFail("%d %d %d %d", 1, 2);
 	TestFormatResultFail("{} {} {} {}", 1, 2);
@@ -250,7 +252,7 @@ static void TestFormatResultError(char const* anErrorMessage, char const* aForma
 
 DEFINE_TEST_G(FormatFailureStrings, MSF_Format)
 {
-	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::WriteString);
+	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::WriteString);
 
 	TestFormatResultError<256>("ER_ExpectedClosingBrace", "{0", 1);
 	TestFormatResultError<256>("ER_IndexOutOfRange", "{1}", 1);
@@ -286,7 +288,7 @@ static void TestFormatResultAsserts(char const* aFormat, Args... someArgs)
 
 DEFINE_TEST_G(FormatFailureAsserts, MSF_Format)
 {
-	MSF_CustomPrint::SetLocalErrorMode(MSF_CustomPrint::Assert);
+	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::Assert);
 	MSF_LogAssertExternal = &locLogAssertExternal;
 	MSF_DoAssert = &locDoAssert;
 
@@ -455,4 +457,23 @@ DEFINE_TEST_G(PedanticErrors, MSF_Format)
 	TEST_EQ(MSF_Format(testString, "%5.5 c", 'c') < 0, shouldError);
 	TEST_EQ(MSF_Format(testString, "%5.5#c", 'c') < 0, shouldError);
 	TEST_EQ(MSF_Format(testString, "%5.5.c", 'c') < 0, shouldError);
+}
+
+DEFINE_TEST_G(RelaxedCSharp, MSF_Format)
+{
+	MSF_CustomPrint::SetLocalErrorFlags(MSF_ErrorFlags::RelaxedCSharpFormat);
+
+	TestFormatResult("{555}", "{555}", 5);
+	TestFormatResult("5{{555}}5", "{0}{{{555}}}{0}", 5);
+	TestFormatResult("{blarg}", "{blarg}", 5);
+	TestFormatResult("5{{555}}", "{}{{{555}}}", 5);
+	TestFormatResult("{0 }", "{0 }", 5);
+
+	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::WriteString);
+
+	TestFormatResultError<256>("ER_IndexOutOfRange", "{}{{{555}}}{}", 5);
+
+	MSF_CustomPrint::ClearLocalErrorMode();
+
+	MSF_CustomPrint::ClearLocalErrorFlags();
 }
