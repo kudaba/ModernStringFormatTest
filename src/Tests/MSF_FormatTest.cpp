@@ -445,18 +445,6 @@ DEFINE_TEST_G(PedanticErrors, MSF_Format)
 	TEST_EQ(MSF_Format(testString, "%++c", 'c') < 0, shouldError);
 	TEST_EQ(MSF_Format(testString, "%  c", 'c') < 0, shouldError);
 	TEST_EQ(MSF_Format(testString, "%##c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%..c", 'c') < 0, shouldError);
-
-	TEST_EQ(MSF_Format(testString, "%5-c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5+c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5 c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5#c", 'c') < 0, shouldError);
-
-	TEST_EQ(MSF_Format(testString, "%5.5-c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5.5+c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5.5 c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5.5#c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%5.5.c", 'c') < 0, shouldError);
 }
 
 DEFINE_TEST_G(RelaxedCSharp, MSF_Format)
