@@ -1,5 +1,6 @@
 #include "MSF_UnitTests.h"
 #include "MSF_Utilities.h"
+#include <stdio.h>
 
 DEFINE_TEST_G(IsAlpha, Utitlities)
 {
@@ -47,4 +48,16 @@ DEFINE_TEST_G(IntMinMax, Utitlities)
 	locIntMinMaxTest<uint16_t>(0, UINT16_MAX / 2, UINT16_MAX / 8);
 	locIntMinMaxTest<uint32_t>(0, UINT32_MAX / 2, UINT32_MAX / 8);
 	locIntMinMaxTest<uint64_t>(0, UINT64_MAX / 2, UINT64_MAX / 8);
+}
+
+DEFINE_TEST_G(StrFmt, Utitlities)
+{
+	TEST_STR_EQ(MSF_StrFmt("{}", 5), "5");
+	TEST_EQ(memcmp(MSF_StrFmtWChar<512>(L"{}", 5), L"5", sizeof(L"5")), 0);
+
+	TestFormatResult("5", "{}", MSF_StrFmt("{}", 5));
+
+	char tmp[MSF_DEFAULT_FMT_SIZE];
+	sprintf(tmp, "%s", (char const*)MSF_StrFmt("{}", 5));
+	TEST_STR_EQ(tmp, "5");
 }

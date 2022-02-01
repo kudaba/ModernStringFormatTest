@@ -23,7 +23,7 @@ struct TestHelper
 
 		Char tmp[256];
 		TEST_EQ(MSF_Format(tmp, format, someArgs...), (intptr_t)MSF_Strlen(expected));
-		TEST_MESSAGE(memcmp(tmp, expected, (MSF_Strlen(expected) + 1) * sizeof(Char)) == 0, "%s", MSF_StrFmt("%s != %s", tmp, expected));
+		TEST_MESSAGE(memcmp(tmp, expected, (MSF_Strlen(expected) + 1) * sizeof(Char)) == 0, "%s", MSF_StrFmt("%s != %s", tmp, expected).myString);
 	}
 };
 

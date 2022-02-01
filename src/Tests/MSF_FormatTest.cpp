@@ -36,6 +36,8 @@ DEFINE_TEST_G(PrintfFormat, MSF_Format)
 	TestFormatResult("test", "%s", "test");
 	TestFormatResult("test", "%S", "test");
 
+	TestFormatResult("(null)", "%S", (char*)nullptr);
+
 	TestFormatResult("5", "%d", 5);
 	TestFormatResult("5", "%i", 5);
 	TestFormatResult("5", "%u", 5);
@@ -393,13 +395,13 @@ DEFINE_TEST_G(FormatCopy, MSF_Format)
 		MSF_CopyChars(testString, testString + 256, "{} {} {} {}");
 
 		auto copy = MSF_CopyStringFormat(
-			MSF_MakeStringFormat(testString, 'c', 5, 1.5f, "Oh and a big string"),
+			MSF_MakeStringFormat(testString, 'c', 5, (char*)nullptr, "Oh and a big string"),
 			[](size_t aSize) { return malloc(aSize); });
 
 		testString[0] = 0;
 
 		TEST_GREATER(MSF_FormatString(*copy, targetString, 256), 0);
-		TEST_STR_EQ(targetString, "c 5 1.5 Oh and a big string");
+		TEST_STR_EQ(targetString, "c 5 (null) Oh and a big string");
 		free((void*)copy);
 	}
 

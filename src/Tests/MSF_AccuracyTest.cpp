@@ -67,7 +67,12 @@ public:
 
 			formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aFlags);
 
-			if (aWidth >= 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aWidth);
+#if MSF_ERROR_PEDANTIC
+			if (aWidth > 0)
+#else
+			if (aWidth >= 0)
+#endif
+				formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aWidth);
 			if (aPrecision >= 0) *formatWrite++ = '.';
 			if (aPrecision > 0) formatWrite += MSF_Format(formatWrite, formatWriteEnd - formatWrite, convert, aPrecision - 1);
 
@@ -127,7 +132,7 @@ public:
 			if (sizeof(Char) == sizeof(wchar_t))
 			{
 				if (strcmp(aModifier, "h") == 0)
-					DoOneTest<Char>(aType, 'a' + (char)(RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, char('a' + (RandomInt(Engine) % ('z' - 'a'))), aModifier, aFlags, aWidth, aPrecision);
 				else if (aModifier[0] == 0 || aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
 					DoOneTest<Char>(aType, (wchar_t)(RandomInt(Engine) % 0xd800), aModifier, aFlags, aWidth, aPrecision);
 			}
@@ -135,7 +140,7 @@ public:
 #endif
 			{
 				if (aModifier[0] == 0 || strcmp(aModifier, "h") == 0)
-					DoOneTest<Char>(aType, 'a' + (char)(RandomInt(Engine) % ('z' - 'a')), aModifier, aFlags, aWidth, aPrecision);
+					DoOneTest<Char>(aType, char('a' + (RandomInt(Engine) % ('z' - 'a'))), aModifier, aFlags, aWidth, aPrecision);
 				else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
 					DoOneTest<Char>(aType, (wchar_t)(RandomInt(Engine) % 0xd800), aModifier, aFlags, aWidth, aPrecision);
 			}
@@ -158,6 +163,9 @@ public:
 				else if (aModifier[0] == 'w' || strcmp(aModifier, "l") == 0)
 					DoOneTest<Char>(aType, L"无国界医生", aModifier, aFlags, aWidth, aPrecision);
 			}
+
+			if (aModifier[0] == 0)
+				DoOneTest<Char>(aType, (Char*)nullptr, aModifier, aFlags, aWidth, aPrecision);
 			break;
 		case 'd':
 		case 'i':
