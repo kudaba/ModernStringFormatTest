@@ -4,3 +4,6 @@
 [submodule "simpletest"]
 	path = simpletest
 	url = https://github.com/kudaba/simpletest
+[submodule "bin/Sharpmake"]
+	path = bin/Sharpmake
+	url = https://github.com/kudaba/SharpmakeArtifacts

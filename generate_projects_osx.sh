@@ -1,4 +1,5 @@
 #!/bin/bash
+chmod +x bin/Sharpmake/osx-x64/Sharpmake.Application
 ./bin/Sharpmake/osx-x64/Sharpmake.Application "/sources(@'SharpMake/Main.cs') /verbose /generateDebugSolution $@"
 errorlevel=$?
 
