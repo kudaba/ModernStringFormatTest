@@ -110,7 +110,8 @@ public:
 		bool equivalent = Streq(msfBuffer, stlBuffer);
 		if (!equivalent)
 		{
-			auto error = MSF_StrFmtUTF8<1024>("Format Error for: \"%s\" Value[%s]\nMSF: \"%s\"\nstd: \"%s\"", format, valueBuffer, msfBuffer, stlBuffer);
+			char const* sizeName = sizeof(Char) == 1 ? "char" : sizeof(Char) == 2 ? "char16" : "char32";
+			auto error = MSF_StrFmtUTF8<1024>("Format Error for: \"%s\" Value[%s] Size[%s]\nMSF: \"%s\"\nstd: \"%s\"", format, valueBuffer, sizeName, msfBuffer, stlBuffer);
 			TEST_MESSAGE(equivalent, "%s", (char const*)error);
 			PrintFErrors++;
 		}
