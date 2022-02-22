@@ -11,7 +11,14 @@ namespace ModernStringFormat
         GCov = 4
     }
 
-    public class CrossTarget : Target
+	[Fragment, Flags]
+	public enum MSF_Options
+	{
+		None = 1,
+		Validation = 2,
+	}
+
+	public class CrossTarget : Target
     {
         public CrossTarget()
         {
@@ -21,10 +28,22 @@ namespace ModernStringFormat
             : base(platform, devEnv, optim)
         {
             Toolset = tools;
-        }
+		}
 
-        public Toolset Toolset;
-    }
+		public override string Name
+		{
+			get
+			{
+				if (Options == MSF_Options.None)
+					return base.Name;
+
+				return base.Name + "_" + Options.ToString();
+			}
+		}
+
+		public Toolset Toolset;
+        public MSF_Options Options = MSF_Options.None | MSF_Options.Validation;
+	}
 
     public static class Globals
 	{
@@ -77,23 +96,32 @@ namespace ModernStringFormat
 			conf.IntermediatePath = "[project.SharpmakeCsPath]" + Globals.PathToBuild + @"\[target.Optimization]\[conf.ProjectFileName]";
 			conf.TargetPath = "[project.SharpmakeCsPath]" + Globals.PathToBin;
 			conf.TargetFileName = @"[conf.ProjectFileName]_[target.Optimization]";
+			if (target.Options != MSF_Options.None)
+				conf.TargetFileName += "_" + target.Options.ToString();
 
 			conf.Defines.Add("MSF_HEAVY_ASSERTS_ENABLED");
 
 			if (target.Platform != Platform.win32) // have at least one set of tests that do not use it
 				conf.Defines.Add("MSF_ERROR_PEDANTIC");
-        }
 
-        [Configure(DevEnv.VisualStudio)]
+			if (target.Options == MSF_Options.Validation)
+				conf.Defines.Add("MSF_VALIDATION_ENABLED");
+		}
+
+		[Configure(DevEnv.VisualStudio)]
 		public void ConfigureVS(Configuration conf, CrossTarget target)
 		{
-            conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP11);
             conf.Options.Add(Options.Vc.Compiler.Exceptions.Disable);
 			conf.Options.Add(Options.Vc.General.WarningLevel.Level4);
 			conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
 
 			conf.Defines.Add("_CRT_SECURE_NO_WARNINGS");
 			conf.Defines.Add("_CRT_NONSTDC_NO_DEPRECATE");
+
+			if (target.Options == MSF_Options.Validation)
+				conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
+			else
+				conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP11);
 		}
 
 		[Configure(DevEnv.make)]
@@ -101,7 +129,6 @@ namespace ModernStringFormat
 		{
             conf.ProjectFileName = "[project.Name]_[target.Platform]_[target.Toolset]";
 
-            conf.Options.Add(Options.Makefile.Compiler.CppLanguageStandard.Cpp11);
             conf.Options.Add(Options.Makefile.Compiler.Exceptions.Disable);
 			conf.Options.Add(Options.Makefile.Compiler.Warnings.MoreWarnings);
 			conf.Options.Add(Options.Makefile.Compiler.TreatWarningsAsErrors.Enable);
@@ -118,8 +145,13 @@ namespace ModernStringFormat
                 conf.AdditionalLinkerOptions.Add("-fprofile-arcs");
                 conf.AdditionalLinkerOptions.Add("-ftest-coverage");
             }
-        }
-    }
+
+			if (target.Options == MSF_Options.Validation)
+				conf.Options.Add(Options.Makefile.Compiler.CppLanguageStandard.Cpp2a);
+			else
+				conf.Options.Add(Options.Makefile.Compiler.CppLanguageStandard.Cpp11);
+		}
+	}
 
 	[Generate]
 	public class ModernStringFormatSolution : Solution

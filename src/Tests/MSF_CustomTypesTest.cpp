@@ -3,6 +3,10 @@
 #include "MSF_FormatPrint.h"
 #include "MSF_FormatStandardTypes.h"
 
+// no idea but cpp20 has this enabled even with exceptions disabled, but only for chrono??
+#undef _HAS_EXCEPTIONS
+#define _HAS_EXCEPTIONS 0
+
 #include <chrono>
 #include <string>
 

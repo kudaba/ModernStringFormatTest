@@ -32,6 +32,14 @@ jobs:
       run: ./build_and_run_tests.sh debug linux gcc
     - name: compile and test release linux gcc
       run: ./build_and_run_tests.sh release linux gcc
+    - name: compile and test debug_validation linux clang
+      run: ./build_and_run_tests.sh debug_validation linux clang
+    - name: compile and test release_validation linux clang
+      run: ./build_and_run_tests.sh release_validation linux clang
+    - name: compile and test debug_validation linux gcc
+      run: ./build_and_run_tests.sh debug_validation linux gcc
+    - name: compile and test release_validation linux gcc
+      run: ./build_and_run_tests.sh release_validation linux gcc
 
   Mac_OSX:
     runs-on: ${{ matrix.os }}
@@ -50,11 +58,14 @@ jobs:
         chmod -R +x bin/*
     - name: generate projects
       run: ./generate_projects_osx.sh
-    - name: compile and test
+    - name: compile and test debug
       run: ./build_and_run_tests.sh debug mac
     - name: compile and test release
       run: ./build_and_run_tests.sh release mac
-
+    - name: compile and test debug_validation
+      run: ./build_and_run_tests.sh debug_validation mac
+    - name: compile and test release_validation
+      run: ./build_and_run_tests.sh release_validation mac
   Windows:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -93,3 +104,23 @@ jobs:
       run: |
         msbuild.exe "%SLN_PATH32%" /p:Configuration=Release
         .\.temp\bin\modernstringformatproject_win32_vs2019_release.exe 
+    - name: compile and test debug validation 64
+      shell: cmd
+      run: |
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug_Validation
+        .\.temp\bin\modernstringformatproject_win64_vs2019_debug_validation.exe
+    - name: compile and test release validation 64
+      shell: cmd
+      run: |
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Release_Validation
+        .\.temp\bin\modernstringformatproject_win64_vs2019_release_validation.exe 
+    - name: compile and test debug validation 32
+      shell: cmd
+      run: |
+        msbuild.exe "%SLN_PATH32%" /p:Configuration=Debug_Validation
+        .\.temp\bin\modernstringformatproject_win32_vs2019_debug_validation.exe
+    - name: compile and test release validation 32
+      shell: cmd
+      run: |
+        msbuild.exe "%SLN_PATH32%" /p:Configuration=Release_Validation
+        .\.temp\bin\modernstringformatproject_win32_vs2019_release_validation.exe 

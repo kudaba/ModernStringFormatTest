@@ -38,11 +38,11 @@ struct TestHelper<char, Args...>
 	}
 };
 
-template <typename... Args>
-static void TestFormatResult(char const* anExpectedResult, char const* aFormat, Args... someArgs)
+template <typename Char1, typename Char2, typename... Args>
+static void TestFormatResult(Char1 const* anExpectedResult, Char2 const* aFormat, Args... someArgs)
 {
-	TestHelper<char, Args...>::Run(anExpectedResult, aFormat, someArgs...);
-	TestHelper<char16_t, Args...>::Run(anExpectedResult, aFormat, someArgs...);
-	TestHelper<char32_t, Args...>::Run(anExpectedResult, aFormat, someArgs...);
-	TestHelper<wchar_t, Args...>::Run(anExpectedResult, aFormat, someArgs...);
+	TestHelper<char, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+	TestHelper<char16_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+	TestHelper<char32_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+	TestHelper<wchar_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
 }

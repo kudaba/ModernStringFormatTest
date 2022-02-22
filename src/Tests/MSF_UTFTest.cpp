@@ -87,10 +87,16 @@ static void locTestUTFCopy(A const* testA, B const* testB)
 
 DEFINE_TEST(UTFConversion)
 {
-	char const* testUTF8 = u8"😁 emojies 🐐	🐑	🐒	🐓	🐔	🐕	🐖	🐗	🐘	🐙	🐚	🐛	🐜	🐝	🐞	🐟";
+	char const* testChar = (char const*)u8"😁 emojies 🐐	🐑	🐒	🐓	🐔	🐕	🐖	🐗	🐘	🐙	🐚	🐛	🐜	🐝	🐞	🐟";
+	char8_t const* testUTF8 = (char8_t const*)u8"😁 emojies 🐐	🐑	🐒	🐓	🐔	🐕	🐖	🐗	🐘	🐙	🐚	🐛	🐜	🐝	🐞	🐟";
 	char16_t const* testUTF16 = u"😁 emojies 🐐	🐑	🐒	🐓	🐔	🐕	🐖	🐗	🐘	🐙	🐚	🐛	🐜	🐝	🐞	🐟";
 	char32_t const* testUTF32 = U"😁 emojies 🐐	🐑	🐒	🐓	🐔	🐕	🐖	🐗	🐘	🐙	🐚	🐛	🐜	🐝	🐞	🐟";
 	wchar_t const* testWChar = L"😁 emojies 🐐	🐑	🐒	🐓	🐔	🐕	🐖	🐗	🐘	🐙	🐚	🐛	🐜	🐝	🐞	🐟";
+
+	locTestUTFCopy(testChar, testUTF8);
+	locTestUTFCopy(testChar, testUTF16);
+	locTestUTFCopy(testChar, testUTF32);
+	locTestUTFCopy(testChar, testWChar);
 
 	locTestUTFCopy(testUTF8, testUTF16);
 	locTestUTFCopy(testUTF8, testUTF32);

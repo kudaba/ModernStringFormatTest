@@ -53,7 +53,7 @@ DEFINE_TEST_G(IntMinMax, Utitlities)
 DEFINE_TEST_G(StrFmt, Utitlities)
 {
 	TEST_STR_EQ(MSF_StrFmt("{}", 5), "5");
-	TEST_EQ(memcmp(MSF_StrFmtWChar<512>(L"{}", 5), L"5", sizeof(L"5")), 0);
+	TEST_EQ(memcmp(MSF_StrFmtWChar(L"{}", 5), L"5", sizeof(L"5")), 0);
 
 	TestFormatResult("5", "{}", MSF_StrFmt("{}", 5));
 
