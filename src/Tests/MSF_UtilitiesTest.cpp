@@ -7,9 +7,9 @@ DEFINE_TEST_G(IsAlpha, Utitlities)
 	for (char c = 0; c < INT8_MAX; ++c)
 	{
 		if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-			TEST_MESSAGE(MSF_IsAsciiAlphaNumeric(c), "%c is NOT an alphabet character", c);
+			TEST_MESSAGE(MSF_IsAsciiAlpha(c), "%c is NOT an alphabet character", c);
 		else
-			TEST_MESSAGE(!MSF_IsAsciiAlphaNumeric(c), "%c is an alphabet character", c);
+			TEST_MESSAGE(!MSF_IsAsciiAlpha(c), "%c is an alphabet character", c);
 	}
 }
 
