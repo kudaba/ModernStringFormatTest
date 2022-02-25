@@ -1,14 +1,16 @@
 using Sharpmake;
 using System;
+using System.IO;
 
 namespace ModernStringFormat
 {
     [Fragment, Flags]
     public enum Toolset
     {
-        Gcc = 1,
-        Clang = 2,
-        GCov = 4
+		None = 1,
+        Gcc = 2,
+        Clang = 4,
+        GCov = 8
     }
 
 	[Fragment, Flags]
@@ -24,25 +26,48 @@ namespace ModernStringFormat
         {
 
         }
-        public CrossTarget(Platform platform, DevEnv devEnv, Optimization optim, Toolset tools = Toolset.Clang)
+        public CrossTarget(Platform platform, DevEnv devEnv, Optimization optim, Toolset tools = Toolset.None, MSF_Options options = MSF_Options.None | MSF_Options.Validation)
             : base(platform, devEnv, optim)
         {
             Toolset = tools;
+			Options = options;
 		}
 
 		public override string Name
 		{
 			get
 			{
-				if (Options == MSF_Options.None)
-					return base.Name;
+				string name = base.Name;
 
-				return base.Name + "_" + Options.ToString();
+				if (Options != MSF_Options.None)
+					name += "_" + Options.ToString();
+
+				return name;
+			}
+		}
+
+		public string BuildName
+		{
+			get
+			{
+				string name = DevEnv.ToString();
+
+				name += "_" + Platform.ToString();
+
+				if (Toolset != Toolset.None)
+					name += "_" + Toolset.ToString();
+
+				name += "_" + Optimization.ToString();
+
+				if (Options != MSF_Options.None)
+					name += "_" + Options.ToString();
+
+				return name;
 			}
 		}
 
 		public Toolset Toolset;
-        public MSF_Options Options = MSF_Options.None | MSF_Options.Validation;
+        public MSF_Options Options;
 	}
 
     public static class Globals
@@ -62,6 +87,10 @@ namespace ModernStringFormat
 		{
 			new CrossTarget(Platform.win64 | Platform.win32,
 				DevEnv.vs2019,
+				Optimization.Debug | Optimization.Release,
+				options: MSF_Options.None),
+			new CrossTarget(Platform.win64 | Platform.win32,
+				DevEnv.vs2022,
 				Optimization.Debug | Optimization.Release),
 			new CrossTarget(Platform.linux,
 				DevEnv.make,
@@ -69,7 +98,8 @@ namespace ModernStringFormat
                 Toolset.Gcc | Toolset.Clang | Toolset.GCov),
             new CrossTarget(Platform.mac,
                 DevEnv.make,
-                Optimization.Debug | Optimization.Release)
+                Optimization.Debug | Optimization.Release,
+				Toolset.Gcc | Toolset.Clang)
         };
 	}
 
@@ -82,22 +112,22 @@ namespace ModernStringFormat
 			SourceRootPath = "[project.SharpmakeCsPath]" + Globals.PathToSrc;
 			AdditionalSourceRootPaths.Add("[project.SharpmakeCsPath]" + Globals.PathToSimpleTest);
 			AdditionalSourceRootPaths.Add("[project.SharpmakeCsPath]" + Globals.PathToModernStringFormat);
+			AdditionalSourceRootPaths.Add("[project.SharpmakeCsPath]" + Globals.PathToRoot);
+			NoneExtensions.Add(".md");
+			NoneExtensions.Add("LICENSE");
 		}
 
 		[Configure]
 		public void ConfigureAll(Configuration conf, CrossTarget target)
 		{
 			conf.ProjectPath = "[project.SharpmakeCsPath]" + Globals.PathToGen;
-			conf.ProjectFileName = "[project.Name]_[target.Platform]_[target.DevEnv]";
+			conf.TargetPath = "[project.SharpmakeCsPath]" + Globals.PathToBin;
+
+			conf.TargetFileName = @"[project.Name]_[target.BuildName]";
+			conf.IntermediatePath = "[project.SharpmakeCsPath]" + Globals.PathToBuild + @"\[target.BuildName]";
 
 			conf.IncludePaths.Add("[project.SharpmakeCsPath]" + Globals.PathToSimpleTest);
 			conf.IncludePaths.Add("[project.SharpmakeCsPath]" + Globals.PathToModernStringFormat);
-
-			conf.IntermediatePath = "[project.SharpmakeCsPath]" + Globals.PathToBuild + @"\[target.Optimization]\[conf.ProjectFileName]";
-			conf.TargetPath = "[project.SharpmakeCsPath]" + Globals.PathToBin;
-			conf.TargetFileName = @"[conf.ProjectFileName]_[target.Optimization]";
-			if (target.Options != MSF_Options.None)
-				conf.TargetFileName += "_" + target.Options.ToString();
 
 			conf.Defines.Add("MSF_HEAVY_ASSERTS_ENABLED");
 
@@ -111,7 +141,9 @@ namespace ModernStringFormat
 		[Configure(DevEnv.VisualStudio)]
 		public void ConfigureVS(Configuration conf, CrossTarget target)
 		{
-            conf.Options.Add(Options.Vc.Compiler.Exceptions.Disable);
+			conf.ProjectFileName = "[project.Name]_[target.DevEnv]";
+
+			conf.Options.Add(Options.Vc.Compiler.Exceptions.Disable);
 			conf.Options.Add(Options.Vc.General.WarningLevel.Level4);
 			conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
 
@@ -129,7 +161,7 @@ namespace ModernStringFormat
 		{
             conf.ProjectFileName = "[project.Name]_[target.Platform]_[target.Toolset]";
 
-            conf.Options.Add(Options.Makefile.Compiler.Exceptions.Disable);
+			conf.Options.Add(Options.Makefile.Compiler.Exceptions.Disable);
 			conf.Options.Add(Options.Makefile.Compiler.Warnings.MoreWarnings);
 			conf.Options.Add(Options.Makefile.Compiler.TreatWarningsAsErrors.Enable);
 
@@ -159,18 +191,29 @@ namespace ModernStringFormat
 		public ModernStringFormatSolution() : base(typeof(CrossTarget))
 		{
 			AddTargets(Globals.DefaultTargets);
+
+			var root = Path.Combine(Util.GetCurrentSharpmakeFileInfo().DirectoryName, @"..\");
+
+			ExtraItems[".github"] = new Strings { Util.DirectoryGetFiles(Path.Combine(root, ".github")) };
+			ExtraItems["Scripts"] = new Strings { Util.DirectoryGetFiles(root, "*.bat") };
+			ExtraItems["Scripts"] = new Strings { Util.DirectoryGetFiles(root, "*.sh") };
 		}
 
 		[Configure]
 		public void ConfigureAll(Configuration conf, CrossTarget target)
 		{
 			conf.SolutionPath = "[solution.SharpmakeCsPath]" + Globals.PathToGen;
-			conf.SolutionFileName = "[solution.Name]_[target.Platform]_[target.DevEnv]";
 
 			conf.AddProject<ModernStringFormatProject>(target);
-        }
+		}
 
-        [Configure(DevEnv.make)]
+		[Configure(DevEnv.VisualStudio)]
+		public void ConfigureVS(Configuration conf, CrossTarget target)
+		{
+			conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
+		}
+
+		[Configure(DevEnv.make)]
         public void ConfigureMake(Configuration conf, CrossTarget target)
         {
             conf.SolutionFileName = "[solution.Name]_[target.Platform]_[target.Toolset]";
@@ -183,6 +226,7 @@ namespace ModernStringFormat
 		public static void SharpmakeMain(Sharpmake.Arguments args)
 		{
 			KitsRootPaths.SetKitsRoot10ToHighestInstalledVersion(DevEnv.vs2019);
+			KitsRootPaths.SetKitsRoot10ToHighestInstalledVersion(DevEnv.vs2022);
 			args.Generate<ModernStringFormatSolution>();
 		}
 	}

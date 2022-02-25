@@ -7,24 +7,24 @@
 
 DEFINE_TEST_G(BasicPrinting, MSF_Format)
 {
-	TestFormatResult("%d", "%%d", 5);
+	TestFormatResult("%d", "%%d");
 	TestFormatResult("%5", "%%%d", 5);
 
-	TestFormatResult("{0}", "{{0}}", 5);
+	TestFormatResult("{0}", "{{0}}");
 	TestFormatResult("{5}", "{{{0}}}", 5);
 
-	TestFormatResult("{}", "{{}}", 5);
+	TestFormatResult("{}", "{{}}");
 	TestFormatResult("{5}", "{{{}}}", 5);
 
-	TestFormatResult("{%d}", "{{%%d}}", 1);
-	TestFormatResult("{0%d}", "{{0%%d}}", 1);
+	TestFormatResult("{%d}", "{{%%d}}");
+	TestFormatResult("{0%d}", "{{0%%d}}");
 
 	TestFormatResult("1 2 3 4", "%d %d %d %d", 1, 2, 3, 4);
 	TestFormatResult("1 2 3 4", "{0} {1} {2} {3}", 1, 2, 3, 4);
 	TestFormatResult("1 2 3 4", "{} {} {} {}", 1, 2, 3, 4);
 	TestFormatResult("1 2 3 4", "%d {} %d {}", 1, 2, 3, 4);
 
-	TestFormatResult("1 1 2 2", "{0} {0} {1} {1}", 1, 2, 3, 4);
+	TestFormatResult("1 1 2 2", "{0} {0} {1} {1}", 1, 2);
 }
 
 DEFINE_TEST_G(PrintfFormat, MSF_Format)
@@ -99,12 +99,12 @@ DEFINE_TEST_G(CSharpFormat, MSF_Format)
 	TestFormatResult("fffffffb", "{0:x}", -5);
 	TestFormatResult("FFFFFFFB", "{0:X}", -5);
 
-	TestFormatResult("-5", "%d", (int64_t)-5, "-5");
-	TestFormatResult("-5", "%i", (int64_t)-5, "-5");
-	TestFormatResult("18446744073709551611", "%u", (int64_t)-5, "");
-	TestFormatResult("1777777777777777777773", "%o", (int64_t)-5, "");
-	TestFormatResult("fffffffffffffffb", "%x", (int64_t)-5, "");
-	TestFormatResult("FFFFFFFFFFFFFFFB", "%X", (int64_t)-5, "");
+	TestFormatResult("-5", "%d", -5LL);
+	TestFormatResult("-5", "%i", -5LL);
+	TestFormatResult("18446744073709551611", "%u", -5LL);
+	TestFormatResult("1777777777777777777773", "%o", -5LL);
+	TestFormatResult("fffffffffffffffb", "%x", -5LL);
+	TestFormatResult("FFFFFFFFFFFFFFFB", "%X", -5LL);
 
 #if defined(_MSC_VER)
 #if WIN64
@@ -138,7 +138,7 @@ DEFINE_TEST_G(CSharpFormat, MSF_Format)
 	TestFormatResult("     0000A", "{0,10:X5}", 10);
 	TestFormatResult("0000A     ", "{0,-10:X5}", 10);
 
-	TestFormatResult("10", "{10}", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+	TestFormatResult("10 9 8 7 6 5 4 3 2 1 0", "{10} {9} {8} {7} {6} {5} {4} {3} {2} {1} {0}", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 }
 
 DEFINE_TEST_G(HybridFormat, MSF_Format)
@@ -157,12 +157,12 @@ DEFINE_TEST_G(HybridFormat, MSF_Format)
 	TestFormatResult("fffffffb", "{:x}", -5);
 	TestFormatResult("FFFFFFFB", "{:X}", -5);
 
-	TestFormatResult("-5", "{:d}", (int64_t)-5, "-5");
-	TestFormatResult("-5", "{:i}", (int64_t)-5, "-5");
-	TestFormatResult("18446744073709551611", "{:u}", (int64_t)-5, "");
-	TestFormatResult("1777777777777777777773", "{:o}", (int64_t)-5, "");
-	TestFormatResult("fffffffffffffffb", "{:x}", (int64_t)-5, "");
-	TestFormatResult("FFFFFFFFFFFFFFFB", "{:X}", (int64_t)-5, "");
+	TestFormatResult("-5", "{:d}", -5LL);
+	TestFormatResult("-5", "{:i}", -5LL);
+	TestFormatResult("18446744073709551611", "{:u}", -5LL);
+	TestFormatResult("1777777777777777777773", "{:o}", -5LL);
+	TestFormatResult("fffffffffffffffb", "{:x}", -5LL);
+	TestFormatResult("FFFFFFFFFFFFFFFB", "{:X}", -5LL);
 
 #if defined(_MSC_VER)
 #if WIN64
@@ -236,74 +236,13 @@ DEFINE_TEST_G(ErrorConditions, MSF_Format)
 
 	char tmp[256];
 	tmp[0] = 1;
-	TEST_LESS(MSF_Format(tmp, 0, "foo"), 0);
+	TEST_LESS(MSF_Format((char*)tmp, 0, "foo"), 0);
 	TEST_EQ(tmp[0], 1);
 
-	TEST_LESS(MSF_Format(nullptr, 0, "foo"), 0);
+	TEST_LESS(MSF_Format((char*)nullptr, 0, "foo"), 0);
 
 	MSF_CustomPrint::ClearLocalErrorMode();
 }
-
-template <int Size, typename... Args>
-static void TestFormatResultError(char const* anErrorMessage, char const* aFormat, Args... someArgs)
-{
-	char tmp[Size];
-	TEST_LESS(MSF_Format(tmp, aFormat, someArgs...), 0);
-	TEST_EQ(strncmp(tmp, anErrorMessage, MSF_IntMin(strlen(anErrorMessage), sizeof(tmp) - 1)), 0);
-}
-
-DEFINE_TEST_G(FormatFailureStrings, MSF_Format)
-{
-	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::WriteString);
-
-	TestFormatResultError<256>("ER_ExpectedClosingBrace", "{0", 1);
-	TestFormatResultError<256>("ER_IndexOutOfRange", "{1}", 1);
-	TestFormatResultError<256>("ER_IndexOutOfRange", "%f %f", 1.f);
-	TestFormatResultError<16>("ER_NotEnoughSpace", "%s", "This is just a really long string");
-
-	MSF_CustomPrint::ClearLocalErrorMode();
-}
-
-#if MSF_ASSERTS_ENABLED
-
-int theAssertCount = 0;
-
-static void locLogAssertExternal(const char*, int, char const*, MSF_StringFormat const&)
-{
-}
-
-static bool locDoAssert()
-{
-	++theAssertCount;
-	return false;
-}
-
-template <typename... Args>
-static void TestFormatResultAsserts(char const* aFormat, Args... someArgs)
-{
-	char tmp[256];
-	TEST_LESS(MSF_Format(tmp, aFormat, someArgs...), 0);
-	TEST_EQ(tmp[0], 0);
-	TEST_EQ(theAssertCount, 1);
-	theAssertCount = 0;
-}
-
-DEFINE_TEST_G(FormatFailureAsserts, MSF_Format)
-{
-	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::Assert);
-	MSF_LogAssertExternal = &locLogAssertExternal;
-	MSF_DoAssert = &locDoAssert;
-
-	TestFormatResultAsserts("{0", 1);
-	TestFormatResultAsserts("{1}", 1);
-	TestFormatResultAsserts("%f %f", 1.f);
-
-	MSF_DoAssert = nullptr;
-	MSF_LogAssertExternal = nullptr;
-	MSF_CustomPrint::ClearLocalErrorMode();
-}
-
-#endif // MSF_ASSERTS_ENABLED
 
 static char* locRealloc(char* aString, size_t aSize, void* aUserData)
 {
@@ -395,7 +334,7 @@ DEFINE_TEST_G(FormatCopy, MSF_Format)
 		MSF_CopyChars(testString, testString + 256, "{} {} {} {}");
 
 		auto copy = MSF_CopyStringFormat(
-			MSF_MakeStringFormat(testString, 'c', 5, (char*)nullptr, "Oh and a big string"),
+			MSF_MakeStringFormat((char const*)testString, 'c', 5, (char*)nullptr, "Oh and a big string"),
 			[](size_t aSize) { return malloc(aSize); });
 
 		testString[0] = 0;
@@ -409,7 +348,7 @@ DEFINE_TEST_G(FormatCopy, MSF_Format)
 		MSF_CopyChars(testString, testString + 256, "{} {} {} {}");
 
 		auto copy = MSF_CopyStringFormat(
-			MSF_MakeStringFormat(testString, 'c', 5, 1.5f, "Oh and a big string"),
+			MSF_MakeStringFormat((char const*)testString, 'c', 5, 1.5f, "Oh and a big string"),
 			[](size_t aSize) { return malloc(aSize); }, false);
 
 		testString[0] = 0;
@@ -431,39 +370,4 @@ DEFINE_TEST_G(Wildcards, MSF_Format)
 	TestFormatResult("    c", "%*c", 5, 'c');
 	TestFormatResult("1.1", "%.*f", 1, 1.14f);
 	TestFormatResult("  1.1", "%*.*f", 5, 1, 1.14f);
-
-	char testString[256];
-	TEST_LESS(MSF_Format(testString, "%**c", 1, 2, 'c'), 0);
-	TEST_LESS(MSF_Format(testString, "%5*c", 1, 2, 'c'), 0);
-	TEST_LESS(MSF_Format(testString, "%*5c", 1, 2, 'c'), 0);
-}
-
-DEFINE_TEST_G(PedanticErrors, MSF_Format)
-{
-	bool shouldError = MSF_ERROR_PEDANTIC;
-	char testString[256];
-
-	TEST_EQ(MSF_Format(testString, "%--c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%++c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%  c", 'c') < 0, shouldError);
-	TEST_EQ(MSF_Format(testString, "%##c", 'c') < 0, shouldError);
-}
-
-DEFINE_TEST_G(RelaxedCSharp, MSF_Format)
-{
-	MSF_CustomPrint::SetLocalErrorFlags(MSF_ErrorFlags::RelaxedCSharpFormat);
-
-	TestFormatResult("{555}", "{555}", 5);
-	TestFormatResult("5{{555}}5", "{0}{{{555}}}{0}", 5);
-	TestFormatResult("{blarg}", "{blarg}", 5);
-	TestFormatResult("5{{555}}", "{}{{{555}}}", 5);
-	TestFormatResult("{0 }", "{0 }", 5);
-
-	MSF_CustomPrint::SetLocalErrorMode(MSF_ErrorMode::WriteString);
-
-	TestFormatResultError<256>("ER_IndexOutOfRange", "{}{{{555}}}{}", 5);
-
-	MSF_CustomPrint::ClearLocalErrorMode();
-
-	MSF_CustomPrint::ClearLocalErrorFlags();
 }

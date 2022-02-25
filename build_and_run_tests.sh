@@ -28,10 +28,10 @@ if [ ${exitcode} = 0 ]; then
 		# whether projects were generated on windows or linux (todo: fix that)
 		# upper case the first letter of Release of Debug to match output paths
 
-		exe=./.temp/bin/modernstringformatproject_${platform}_${toolset}_${config}
+		exe=./.temp/bin/modernstringformatproject_make_${platform}_${toolset}_${config}
 		if [ ! -f "$exe" ]; then
 			config="$(tr '[:lower:]' '[:upper:]' <<< ${config:0:1})${config:1}"
-			exe=./.temp/output/modernstringformatproject_${platform}_${toolset}_${config}
+			exe=./.temp/bin/modernstringformatproject_${platform}_${toolset}_${config}
 		fi
 
 		$exe

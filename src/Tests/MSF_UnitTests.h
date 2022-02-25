@@ -22,7 +22,7 @@ struct TestHelper
 		MSF_UTFCopy(format, aFormat);
 
 		Char tmp[256];
-		TEST_EQ(MSF_Format(tmp, format, someArgs...), (intptr_t)MSF_Strlen(expected));
+		TEST_EQ(MSF_Format(tmp, (Char const*)format, someArgs...), (intptr_t)MSF_Strlen(expected));
 		TEST_MESSAGE(memcmp(tmp, expected, (MSF_Strlen(expected) + 1) * sizeof(Char)) == 0, "%s", MSF_StrFmt("%s != %s", tmp, expected).myString);
 	}
 };
@@ -38,8 +38,17 @@ struct TestHelper<char, Args...>
 	}
 };
 
-template <typename Char1, typename Char2, typename... Args>
-static void TestFormatResult(Char1 const* anExpectedResult, Char2 const* aFormat, Args... someArgs)
+template <typename... Args>
+static void TestFormatResult(char const* anExpectedResult, MSF_STRING(char) aFormat, Args... someArgs)
+{
+	TestHelper<char, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+	TestHelper<char16_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+	TestHelper<char32_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+	TestHelper<wchar_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
+}
+
+template <typename... Args>
+static void TestFormatResult(char8_t const* anExpectedResult, MSF_STRING(char) aFormat, Args... someArgs)
 {
 	TestHelper<char, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);
 	TestHelper<char16_t, Args...>::Run((char const*)anExpectedResult, (char const*)aFormat, someArgs...);

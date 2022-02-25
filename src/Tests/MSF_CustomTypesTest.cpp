@@ -23,6 +23,8 @@ MSF_DEFINE_USER_PRINTF_TYPE_FLAG(std::chrono::milliseconds, 0, Milli);
 MSF_DEFINE_USER_PRINTF_TYPE_FLAG(std::chrono::microseconds, 0, Micro);
 MSF_DEFINE_USER_PRINTF_TYPE_FLAG(std::chrono::nanoseconds, 0, Nano);
 
+MSF_MAP_CHAR_TO_TYPES('t', MSF_StringFormatTypeLookup<std::chrono::seconds>::ID);
+
 namespace MSF_StringFormatTime
 {
 	static const uint32_t ValidTypes = MSF_StringFormatTypeLookup<std::chrono::seconds>::ID;
@@ -112,7 +114,7 @@ DEFINE_TEST_G(Format, CustomType)
 	TestFormatResult("5ns", "{}", std::chrono::nanoseconds(5));
 }
 
-MSF_DEFINE_TYPE_CONVERSION(std::string, aString.c_str());
+MSF_DEFINE_TYPE_CONVERSION(std::string, value.c_str());
 
 DEFINE_TEST_G(Conversion, CustomType)
 {

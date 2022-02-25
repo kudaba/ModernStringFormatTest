@@ -19,9 +19,6 @@ jobs:
     - name: setup
       run: |
         chmod +x *.sh
-        chmod -R +x bin/*
-    - name: install dependencies
-      run: ./install_dependencies.sh
     - name: generate projects
       run: ./generate_projects.sh
     - name: compile and test debug linux clang
@@ -32,14 +29,15 @@ jobs:
       run: ./build_and_run_tests.sh debug linux gcc
     - name: compile and test release linux gcc
       run: ./build_and_run_tests.sh release linux gcc
-    - name: compile and test debug_validation linux clang
-      run: ./build_and_run_tests.sh debug_validation linux clang
-    - name: compile and test release_validation linux clang
-      run: ./build_and_run_tests.sh release_validation linux clang
-    - name: compile and test debug_validation linux gcc
-      run: ./build_and_run_tests.sh debug_validation linux gcc
-    - name: compile and test release_validation linux gcc
-      run: ./build_and_run_tests.sh release_validation linux gcc
+      # todo: clang crashes and gcc 11 isn't available
+#    - name: compile and test debug_validation linux clang
+#      run: ./build_and_run_tests.sh debug_validation linux clang
+#    - name: compile and test release_validation linux clang
+#      run: ./build_and_run_tests.sh release_validation linux clang
+#    - name: compile and test debug_validation linux gcc
+#      run: ./build_and_run_tests.sh debug_validation linux gcc
+#    - name: compile and test release_validation linux gcc
+#      run: ./build_and_run_tests.sh release_validation linux gcc
 
   Mac_OSX:
     runs-on: ${{ matrix.os }}
@@ -55,23 +53,22 @@ jobs:
     - name: setup
       run: |
         chmod +x *.sh
-        chmod -R +x bin/*
     - name: generate projects
       run: ./generate_projects_osx.sh
     - name: compile and test debug
       run: ./build_and_run_tests.sh debug mac
     - name: compile and test release
       run: ./build_and_run_tests.sh release mac
-    - name: compile and test debug_validation
-      run: ./build_and_run_tests.sh debug_validation mac
-    - name: compile and test release_validation
-      run: ./build_and_run_tests.sh release_validation mac
+      # todo: clang crashes and I'm not building gcc on mac... yet
+#    - name: compile and test debug_validation
+#      run: ./build_and_run_tests.sh debug_validation mac
+#    - name: compile and test release_validation
+#      run: ./build_and_run_tests.sh release_validation mac
   Windows:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     env:
-      SLN_PATH: projects\modernstringformatsolution_win64_vs2019.sln
-      SLN_PATH32: projects\modernstringformatsolution_win32_vs2019.sln
+      SLN_PATH: projects\modernstringformatsolution_vs2022.sln
     strategy:
       matrix:
         os: [windows-latest]
@@ -87,40 +84,40 @@ jobs:
     - name: compile and test debug 64
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug
-        .\.temp\bin\modernstringformatproject_win64_vs2019_debug.exe
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug /p:Platform=x64
+        .\.temp\bin\modernstringformatproject_vs2022_win64_debug.exe
     - name: compile and test release 64
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH%" /p:Configuration=Release
-        .\.temp\bin\modernstringformatproject_win64_vs2019_release.exe 
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Release /p:Platform=x64
+        .\.temp\bin\modernstringformatproject_vs2022_win64_release.exe 
     - name: compile and test debug 32
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH32%" /p:Configuration=Debug
-        .\.temp\bin\modernstringformatproject_win32_vs2019_debug.exe
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug /p:Platform=win32
+        .\.temp\bin\modernstringformatproject_vs2022_win32_debug.exe
     - name: compile and test release 32
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH32%" /p:Configuration=Release
-        .\.temp\bin\modernstringformatproject_win32_vs2019_release.exe 
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Release /p:Platform=win32
+        .\.temp\bin\modernstringformatproject_vs2022_win32_release.exe 
     - name: compile and test debug validation 64
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug_Validation
-        .\.temp\bin\modernstringformatproject_win64_vs2019_debug_validation.exe
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug_Validation /p:Platform=x64
+        .\.temp\bin\modernstringformatproject_vs2022_win64_debug_validation.exe
     - name: compile and test release validation 64
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH%" /p:Configuration=Release_Validation
-        .\.temp\bin\modernstringformatproject_win64_vs2019_release_validation.exe 
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Release_Validation /p:Platform=x64
+        .\.temp\bin\modernstringformatproject_vs2022_win64_release_validation.exe 
     - name: compile and test debug validation 32
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH32%" /p:Configuration=Debug_Validation
-        .\.temp\bin\modernstringformatproject_win32_vs2019_debug_validation.exe
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Debug_Validation /p:Platform=win32
+        .\.temp\bin\modernstringformatproject_vs2022_win32_debug_validation.exe
     - name: compile and test release validation 32
       shell: cmd
       run: |
-        msbuild.exe "%SLN_PATH32%" /p:Configuration=Release_Validation
-        .\.temp\bin\modernstringformatproject_win32_vs2019_release_validation.exe 
+        msbuild.exe "%SLN_PATH%" /p:Configuration=Release_Validation /p:Platform=win32
+        .\.temp\bin\modernstringformatproject_vs2022_win32_release_validation.exe 

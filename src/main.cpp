@@ -2,11 +2,20 @@
 #include "MSF_FormatPrint.h"
 #include <string.h>
 
+#if defined(_MSC_FULL_VER)
+#include <Windows.h>
+#include <stdio.h>
+#endif
+
 bool MSF_UnitTestFailureBreak;
 int MSF_AccuracyTestIterations;
 
 int main(int argc, char* argv[])
 {
+#if defined(_MSC_FULL_VER)
+	TestFixture::Print = [](char const* string) { OutputDebugString(string); printf("%s", string); };
+#endif
+
 	char const* groupFilter = nullptr;
 	char const* testFilter = nullptr;
 	for (int i = 1; i < argc; ++i)
