@@ -99,7 +99,7 @@ namespace ModernStringFormat
             new CrossTarget(Platform.mac,
                 DevEnv.make,
                 Optimization.Debug | Optimization.Release,
-				Toolset.Gcc | Toolset.Clang)
+				Toolset.Clang)
         };
 	}
 

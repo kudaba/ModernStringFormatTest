@@ -19,6 +19,9 @@ jobs:
     - name: setup
       run: |
         chmod +x *.sh
+        sudo update-alternatives --remove-all clang
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 1000
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-12 1000
     - name: generate projects
       run: ./generate_projects.sh
     - name: compile and test debug linux clang
@@ -29,11 +32,11 @@ jobs:
       run: ./build_and_run_tests.sh debug linux gcc
     - name: compile and test release linux gcc
       run: ./build_and_run_tests.sh release linux gcc
-      # todo: clang crashes and gcc 11 isn't available
-#    - name: compile and test debug_validation linux clang
-#      run: ./build_and_run_tests.sh debug_validation linux clang
-#    - name: compile and test release_validation linux clang
-#      run: ./build_and_run_tests.sh release_validation linux clang
+    - name: compile and test debug_validation linux clang
+      run: ./build_and_run_tests.sh debug_validation linux clang
+    - name: compile and test release_validation linux clang
+      run: ./build_and_run_tests.sh release_validation linux clang
+      # todo: gcc-11 isn't available on runners yet, and I don't want to add installer for it
 #    - name: compile and test debug_validation linux gcc
 #      run: ./build_and_run_tests.sh debug_validation linux gcc
 #    - name: compile and test release_validation linux gcc
@@ -53,17 +56,19 @@ jobs:
     - name: setup
       run: |
         chmod +x *.sh
+        alias gcc=gcc-11
+        alias g++=g++-11
     - name: generate projects
       run: ./generate_projects_osx.sh
-    - name: compile and test debug
-      run: ./build_and_run_tests.sh debug mac
-    - name: compile and test release
-      run: ./build_and_run_tests.sh release mac
-      # todo: clang crashes and I'm not building gcc on mac... yet
-#    - name: compile and test debug_validation
-#      run: ./build_and_run_tests.sh debug_validation mac
-#    - name: compile and test release_validation
-#      run: ./build_and_run_tests.sh release_validation mac
+    - name: compile and test debug mac clang
+      run: ./build_and_run_tests.sh debug mac clang
+    - name: compile and test release mac clang
+      run: ./build_and_run_tests.sh release mac clang
+      # todo: Crashing, even on clang 13?
+#    - name: compile and test debug_validation mac clang
+#      run: ./build_and_run_tests.sh debug_validation mac clang
+#    - name: compile and test release_validation mac clang
+#      run: ./build_and_run_tests.sh release_validation mac clang
   Windows:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
